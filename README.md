@@ -1,82 +1,128 @@
-# Query Generation Module
+# Factual Hallucination Detection and Correction in LLM-Generated Medical Summaries Using Claim Decomposition and Evidence Retrieval
 
-A lightweight TypeScript + Express backend with a minimal React UI for converting clinical claims into medical search queries.
+## Query Generation Module
 
-## What is included
-- `backend/` - full backend structure with Express, validation, and query generation logic
-- `src/` - React UI to submit clinical claims and view generated results
-- `vite.config.ts` - frontend proxy to backend API during development
-- `backend/.env.example` - sample backend environment file
+This project is now organized as a clean full-stack structure with a separate FastAPI backend and React frontend. The backend preserves the useful existing claim-to-query generation logic, and the frontend provides a simple student-friendly UI for testing it.
 
-## Backend API
+## What Was Kept and Reorganized
 
-### Health check
-- **GET** `/api/health`
-- Response:
-  ```json
-  { "success": true, "message": "backend running" }
-  ```
+- Kept the working FastAPI request flow and Pydantic schemas from the existing `app/` code.
+- Preserved the useful rule-based query generation logic and moved it into a proper backend service and utility layer.
+- Added safe spaCy fallback so the backend does not crash if a model is unavailable.
+- Added a new React + Vite frontend for interacting with the backend.
+- Removed the old misplaced root backend files in favor of a clear `backend/` and `frontend/` separation.
+- Added root-level scripts so the whole project can be started from VS Code or a single terminal.
+- Preserved backward-compatible API routes such as `/api/health` and `/api/generate-query` to avoid breaking older callers.
 
-### Generate query
-- **POST** `/api/query/generate`
-- Request body:
-  ```json
-  { "claim": "Antibiotics cure diabetes" }
-  ```
-- Response:
-  ```json
-  {
-    "success": true,
-    "message": "Query generated successfully",
-    "data": {
-      "originalClaim": "Antibiotics cure diabetes",
-      "cleanedClaim": "antibiotics cure diabetes",
-      "keywords": ["antibiotics", "diabetes"],
-      "generatedQuery": "antibiotics diabetes treatment evidence",
-      "message": "Query generated successfully"
-    }
+## Final Folder Structure
+
+```text
+query-generation-module/
+|
+|-- backend/
+|   |-- app/
+|   |   |-- main.py
+|   |   |-- routes/
+|   |   |   `-- query_routes.py
+|   |   |-- services/
+|   |   |   `-- query_service.py
+|   |   |-- schemas/
+|   |   |   `-- query_schema.py
+|   |   |-- utils/
+|   |   |   `-- text_utils.py
+|   |   `-- __init__.py
+|   |-- requirements.txt
+|   |-- run.py
+|   `-- README.md
+|
+|-- frontend/
+|   |-- src/
+|   |   |-- App.jsx
+|   |   |-- main.jsx
+|   |   |-- components/
+|   |   |   |-- ClaimForm.jsx
+|   |   |   `-- ResultCard.jsx
+|   |   `-- api/
+|   |       `-- queryApi.js
+|   |-- index.html
+|   |-- package.json
+|   |-- vite.config.js
+|   `-- README.md
+|
+`-- README.md
+```
+
+## Quick Start
+
+### One Command
+
+```powershell
+npm install
+python -m pip install -r backend/requirements.txt
+npm run fullstack
+```
+
+This starts:
+
+- Backend on `http://127.0.0.1:8000`
+- Backend docs on `http://127.0.0.1:8000/docs`
+- Frontend on `http://127.0.0.1:5173`
+
+### Individual Commands
+
+```powershell
+npm run server
+npm run client
+npm run dev
+```
+
+### VS Code
+
+Use the task `Run fullstack app` from `Terminal -> Run Task`, or run `npm run fullstack` in the integrated terminal.
+
+## Expected Localhost Links
+
+- Backend: `http://127.0.0.1:8000`
+- Backend docs: `http://127.0.0.1:8000/docs`
+- Frontend: `http://127.0.0.1:5173`
+
+## Sample Backend Input
+
+```json
+{
+  "claim": "Insulin is used to manage diabetes."
+}
+```
+
+## Sample Backend Output
+
+```json
+{
+  "success": true,
+  "message": "Query generated successfully",
+  "data": {
+    "claim": "Insulin is used to manage diabetes.",
+    "keywords": ["insulin", "diabetes", "management"],
+    "primary_query": "insulin diabetes management",
+    "alternate_queries": [
+      "insulin for diabetes management",
+      "diabetes insulin therapy",
+      "insulin and diabetes treatment"
+    ]
   }
-  ```
+}
+```
 
-## Run locally
+## Common Fixes
 
-1. Install dependencies in the root:
-   ```bash
-   npm install
-   ```
-
-2. Start backend only:
-   ```bash
-   npm run dev:backend
-   ```
-   Backend API will run at `http://localhost:4000`.
-
-3. Start frontend only:
-   ```bash
-   npm run dev:frontend
-   ```
-   Open the execution page at `http://localhost:5173`.
-
-4. Start both together:
-   ```bash
-   npm run dev
-   ```
-   Then use:
-   - Frontend UI: `http://localhost:5173`
-   - Backend health check: `http://localhost:4000/api/health`
-
-## Expected local behavior
-
-- `http://localhost:5173` shows the Query Generation Module page.
-- `http://localhost:4000/api/health` returns the backend status JSON.
-- `http://localhost:4000/` is backend root only and returns:
-  ```json
-  { "success": false, "message": "Route not found" }
-  ```
-
-## Notes
-- Backend listens on port `4000` by default.
-- Frontend dev server is fixed to port `5173`.
-- Frontend proxy forwards `/api` requests to the backend.
-- The frontend UI is a simple claim form at the Vite app.
-- Environment config is stored in `backend/.env` and `backend/.env.example`.
+- If `python` is not recognized, install Python from python.org and enable the `Add Python to PATH` option, or use `py`.
+- If root `npm install` finishes but the frontend still lacks dependencies, run `npm --prefix frontend install`.
+- If `pip` is not recognized, use `python -m pip` instead of plain `pip`.
+- If `uvicorn` is not recognized, use `python -m uvicorn app.main:app --reload`.
+- If PowerShell activation is blocked, run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`.
+- If `Activate.ps1` is not found, recreate the environment with `python -m venv .venv`.
+- If port `8000` is in use, run `python -m uvicorn app.main:app --reload --port 8001`.
+- If port `5173` is in use, check the Vite terminal output for the new frontend URL.
+- If spaCy models are missing, the backend falls back automatically to simple keyword extraction.
+- If the frontend cannot connect, verify the backend is running and CORS is enabled for `http://127.0.0.1:5173`.
+- If the frontend still shows backend errors, restart both terminals after code changes so Vite proxy and FastAPI reload pick up the latest updates.

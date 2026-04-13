@@ -1,7 +1,0 @@
-{
-  "name": "Query Generation",
-  "title": "Query Generation",
-  "appName": "Query Generation",
-  "description": "A backend module that converts atomic clinical claims into optimized PubMed-friendly search queries using NLP techniques.",
-  "requestFramePermissions": []
-}
