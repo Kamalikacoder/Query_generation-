@@ -1,128 +1,134 @@
-# Factual Hallucination Detection and Correction in LLM-Generated Medical Summaries Using Claim Decomposition and Evidence Retrieval
+# Evidence Retrieval Module
 
-## Query Generation Module
+Complete full-stack project for:
 
-This project is now organized as a clean full-stack structure with a separate FastAPI backend and React frontend. The backend preserves the useful existing claim-to-query generation logic, and the frontend provides a simple student-friendly UI for testing it.
+**Factual Hallucination Detection and Correction in LLM-Generated Medical Summaries Using Claim Decomposition and Evidence Retrieval**
 
-## What Was Kept and Reorganized
+This project contains:
 
-- Kept the working FastAPI request flow and Pydantic schemas from the existing `app/` code.
-- Preserved the useful rule-based query generation logic and moved it into a proper backend service and utility layer.
-- Added safe spaCy fallback so the backend does not crash if a model is unavailable.
-- Added a new React + Vite frontend for interacting with the backend.
-- Removed the old misplaced root backend files in favor of a clear `backend/` and `frontend/` separation.
-- Added root-level scripts so the whole project can be started from VS Code or a single terminal.
-- Preserved backward-compatible API routes such as `/api/health` and `/api/generate-query` to avoid breaking older callers.
+- `backend/` FastAPI service running at `http://127.0.0.1:8000`
+- `frontend/` React + Vite client running at `http://localhost:5173`
 
-## Final Folder Structure
+Start the backend first, then start the frontend.
+
+## Folder Structure
 
 ```text
-query-generation-module/
-|
-|-- backend/
-|   |-- app/
-|   |   |-- main.py
-|   |   |-- routes/
-|   |   |   `-- query_routes.py
-|   |   |-- services/
-|   |   |   `-- query_service.py
-|   |   |-- schemas/
-|   |   |   `-- query_schema.py
-|   |   |-- utils/
-|   |   |   `-- text_utils.py
-|   |   `-- __init__.py
-|   |-- requirements.txt
-|   |-- run.py
-|   `-- README.md
-|
-|-- frontend/
-|   |-- src/
-|   |   |-- App.jsx
-|   |   |-- main.jsx
-|   |   |-- components/
-|   |   |   |-- ClaimForm.jsx
-|   |   |   `-- ResultCard.jsx
-|   |   `-- api/
-|   |       `-- queryApi.js
-|   |-- index.html
-|   |-- package.json
-|   |-- vite.config.js
-|   `-- README.md
-|
-`-- README.md
+backend/
+  app/
+    __init__.py
+    config.py
+    main.py
+    routes/
+      __init__.py
+      evidence.py
+    schemas/
+      __init__.py
+      evidence_schema.py
+    services/
+      __init__.py
+      pubmed_service.py
+      retrieval_service.py
+    utils/
+      __init__.py
+      query_utils.py
+      text_utils.py
+  .env.example
+  requirements.txt
+  README.md
+
+frontend/
+  src/
+    App.jsx
+    main.jsx
+    api.js
+    components/
+      SearchBox.jsx
+      ResultCard.jsx
+      ErrorMessage.jsx
+    styles.css
+  index.html
+  package.json
+  vite.config.js
+  .env.example
+  README.md
 ```
 
-## Quick Start
+## Backend Setup
 
-### One Command
+1. `cd backend`
+2. `python -m venv venv`
+3. Activate the virtual environment.
+   PowerShell: `.\\venv\\Scripts\\Activate.ps1`
+   Command Prompt: `venv\\Scripts\\activate`
+4. `pip install -r requirements.txt`
+5. Create `.env` from `.env.example`
+6. `uvicorn app.main:app --reload --port 8000`
 
-```powershell
-npm install
-python -m pip install -r backend/requirements.txt
-npm run fullstack
-```
+Backend URLs:
 
-This starts:
+- App root: `http://127.0.0.1:8000/`
+- Health: `http://127.0.0.1:8000/health`
+- Docs: `http://127.0.0.1:8000/docs`
 
-- Backend on `http://127.0.0.1:8000`
-- Backend docs on `http://127.0.0.1:8000/docs`
-- Frontend on `http://127.0.0.1:5173`
+## Frontend Setup
 
-### Individual Commands
+1. Open a second terminal
+2. `cd frontend`
+3. `npm install`
+4. Create `.env` from `.env.example`
+5. `npm run dev`
 
-```powershell
-npm run server
-npm run client
-npm run dev
-```
+Frontend URL:
 
-### VS Code
+- `http://localhost:5173`
 
-Use the task `Run fullstack app` from `Terminal -> Run Task`, or run `npm run fullstack` in the integrated terminal.
+## API Contract
 
-## Expected Localhost Links
+### POST `http://127.0.0.1:8000/api/v1/retrieve-evidence`
 
-- Backend: `http://127.0.0.1:8000`
-- Backend docs: `http://127.0.0.1:8000/docs`
-- Frontend: `http://127.0.0.1:5173`
-
-## Sample Backend Input
+Request body:
 
 ```json
 {
-  "claim": "Insulin is used to manage diabetes."
+  "claim": "Antibiotics cure diabetes",
+  "top_k": 3
 }
 ```
 
-## Sample Backend Output
+Success response:
 
 ```json
 {
-  "success": true,
-  "message": "Query generated successfully",
-  "data": {
-    "claim": "Insulin is used to manage diabetes.",
-    "keywords": ["insulin", "diabetes", "management"],
-    "primary_query": "insulin diabetes management",
-    "alternate_queries": [
-      "insulin for diabetes management",
-      "diabetes insulin therapy",
-      "insulin and diabetes treatment"
-    ]
-  }
+  "input_claim": "Antibiotics cure diabetes",
+  "search_query": "(Antibiotics cure diabetes) AND (antibiotics AND cure AND diabetes)",
+  "retrieved_evidence": [
+    {
+      "pmid": "12345678",
+      "title": "Example article title",
+      "abstract": "Abstract text or Abstract not available",
+      "authors": ["Jane Doe"],
+      "journal": "Example Journal",
+      "publication_year": "2024",
+      "pubmed_url": "https://pubmed.ncbi.nlm.nih.gov/12345678/"
+    }
+  ]
 }
 ```
 
-## Common Fixes
+Error response:
 
-- If `python` is not recognized, install Python from python.org and enable the `Add Python to PATH` option, or use `py`.
-- If root `npm install` finishes but the frontend still lacks dependencies, run `npm --prefix frontend install`.
-- If `pip` is not recognized, use `python -m pip` instead of plain `pip`.
-- If `uvicorn` is not recognized, use `python -m uvicorn app.main:app --reload`.
-- If PowerShell activation is blocked, run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`.
-- If `Activate.ps1` is not found, recreate the environment with `python -m venv .venv`.
-- If port `8000` is in use, run `python -m uvicorn app.main:app --reload --port 8001`.
-- If port `5173` is in use, check the Vite terminal output for the new frontend URL.
-- If spaCy models are missing, the backend falls back automatically to simple keyword extraction.
-- If the frontend cannot connect, verify the backend is running and CORS is enabled for `http://127.0.0.1:5173`.
-- If the frontend still shows backend errors, restart both terminals after code changes so Vite proxy and FastAPI reload pick up the latest updates.
+```json
+{
+  "detail": "Claim must not be empty."
+}
+```
+
+## Notes
+
+- Backend must be started first.
+- Frontend uses `VITE_API_BASE_URL=http://127.0.0.1:8000`.
+- CORS allows `http://localhost:5173`.
+- Empty abstracts fall back to `Abstract not available`.
+- Missing authors fall back to an empty list from the backend and a readable message in the UI.
+- If PubMed returns no matches, the frontend shows a dedicated no-results state.
