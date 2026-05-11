@@ -1,0 +1,4 @@
+web_frontend/
+python_backend/__pycache__/
+*.pyc
+.env

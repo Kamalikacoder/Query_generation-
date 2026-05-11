@@ -1,10 +1,7 @@
-node_modules/
-build/
-dist/
-coverage/
-.DS_Store
-*.log
-.env*
-!.env.example
-backend/__pycache__/
-*.py[cod]
+web_frontend/node_modules/
+web_frontend/server.out.log
+web_frontend/server.err.log
+python_backend/__pycache__/
+__pycache__/
+*.pyc
+.env
